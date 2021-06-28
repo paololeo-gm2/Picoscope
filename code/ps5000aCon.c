@@ -873,10 +873,93 @@ PICO_STATUS setTrigger(UNIT * unit,
 ****************************************************************************/
 void collectRapidBlock(UNIT * unit)
 {
+	int num_of_waveforms = 1000;
+	int num_of_points = 2000;
+	int num_of_points_pre_trigger = 500;
+	int num_of_points_post_trigger = 1500;
+
+	int8_t ch = '.';
+	
+	while(ch != 'S')
+	{
+		printf("\n\n");
+		printf("ACTUAL OPTIONS FOR BLOCK DATA CAPTURE\n\n");
+		printf("Number of waveforms = %i\n", num_of_waveforms);
+		printf("Number of Points per waveform = %i\n", num_of_points);
+		printf("Number of Points pre-trigger = %i\n", num_of_points_pre_trigger);
+		printf("Number of Points post-trigger = %i\n", num_of_points_post_trigger);
+
+		printf("\n");
+		printf("Please select operation:\n\n");
+
+		printf("W - Set Number of Waveforms		P - Set Number of Points per waveform\n");
+		printf("F - Set Number of Points pre-trigger	L - Set Number of points post-trigger\n");
+		printf("S - Start Collect\n");
+		printf("Operation:");
+
+		ch = toupper(_getch());
+
+		printf("\n\n")
+
+		switch (ch)
+		{
+			case 'W':
+				printf("Number of waveforms to collect:");
+				scanf_s("%i", &num_of_waveforms);
+				break;
+			case 'P':
+				printf("Number of points per waveform to collect:");
+				scanf_s("%i", &num_of_points);
+				do
+				{
+					printf("Number of points pre-trigger to collect:");
+					scanf_s("%i", &num_of_points_pre_trigger);
+					num_of_points_post_trigger = num_of_points - num_of_points_pre_trigger;
+					if(num_of_points_pre_trigger > num_of_points || num_of_points_pre_trigger < 0)
+					{
+						printf("Invalid value: Number of points pre-trigger is greater than Number of points. Please set a valid value\n");
+					}				
+				} while(num_of_points_pre_trigger > num_of_points || num_of_points_pre_trigger < 0);
+				break;
+			case 'F':
+				do
+				{
+					printf("Number of points pre-trigger to collect:");
+					scanf_s("%i", &num_of_points_pre_trigger);
+					num_of_points_post_trigger = num_of_points - num_of_points_pre_trigger;
+					if(num_of_points_pre_trigger > num_of_points || num_of_points_pre_trigger < 0)
+					{
+						printf("Invalid value: Number of points pre-trigger is greater than Number of points. Please set a valid value\n");
+					}
+				}while (num_of_points_pre_trigger > num_of_points || num_of_points_pre_trigger < 0);
+				break;
+			case 'L': 
+				do
+				{
+					printf("Number of points post-trigger to collect:");
+					scanf_s("%i", &num_of_points_post_trigger);
+					num_of_points_pre_trigger = num_of_points - num_of_points_post_trigger;
+					if(num_of_points_post_trigger > num_of_points || num_of_points_post_trigger < 0)
+					{
+						printf("Invalid value: Number of points pre-trigger is greater than Number of points. Please set a valid value\n");
+					}
+				}while (num_of_points_post_trigger > num_of_points || num_of_points_post_trigger < 0);
+				break;
+			case 'S':
+				break;
+			default:
+				printf("Invalid Operation\n");
+				break;
+		}
+
+	}
+
+	printf("\n\n");
+
 	uint32_t	nCaptures;
 	uint32_t	nSegments;
 	int32_t		nMaxSamples;
-	uint32_t	nSamples = 2000;
+	uint32_t	nSamples = num_of_points;
 	int32_t		timeIndisposed;
 	uint32_t	capture;
 	int16_t		channel;
@@ -969,7 +1052,7 @@ void collectRapidBlock(UNIT * unit)
 	status = ps5000aGetMaxSegments(unit->handle, &maxSegments);
 
 	// Set the number of segments - this can be more than the number of waveforms to collect
-	nSegments = 1000;
+	nSegments = num_of_waveforms;
 	printf("GUARDAMIIIIII : %i\n", maxSegments);
 
 	if (nSegments > maxSegments)
@@ -978,7 +1061,7 @@ void collectRapidBlock(UNIT * unit)
 	}
 
 	// Set the number of captures
-	nCaptures = 1000;
+	nCaptures = num_of_waveforms;
 
 	// Segment the memory
 	status = ps5000aMemorySegments(unit->handle, nSegments, &nMaxSamples);
@@ -1003,7 +1086,7 @@ void collectRapidBlock(UNIT * unit)
 	do
 	{
 		retry = 0;
-		status = ps5000aRunBlock(unit->handle, 500, nSamples-500, timebase, &timeIndisposed, 0, callBackBlock, NULL);
+		status = ps5000aRunBlock(unit->handle, num_of_points_pre_trigger, num_of_points_post_trigger, timebase, &timeIndisposed, 0, callBackBlock, NULL);
 
 		if (status != PICO_OK)
 		{
