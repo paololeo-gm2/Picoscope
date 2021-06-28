@@ -894,7 +894,7 @@ void collectRapidBlock(UNIT * unit)
 
 		printf("W - Set Number of Waveforms		P - Set Number of Points per waveform\n");
 		printf("F - Set Number of Points pre-trigger	L - Set Number of points post-trigger\n");
-		printf("S - Start Collect\n");
+		printf("S - Continue\n");
 		printf("Operation:");
 
 		ch = toupper(_getch());
@@ -1403,6 +1403,121 @@ void set_info(UNIT * unit)
 			unit->sigGen = SIGGEN_FUNCTGEN;
 		}
 	}
+}
+
+void setCoupling(UNIT * unit)
+{
+	PICO_STATUS powerStatus = PICO_OK;
+	PICO_STATUS status = PICO_OK;
+	PS5000A_DEVICE_RESOLUTION resolution = PS5000A_DR_8BIT;
+
+	int32_t i, ch;
+	int32_t count = 0;
+	int16_t numValidChannels = unit->channelCount; // Dependent on power setting - i.e. channel A & B if USB powered on 4-channel device
+	int16_t numEnabledChannels = 0;
+	int16_t retry = FALSE;
+
+	if (unit->channelCount == QUAD_SCOPE)
+	{
+		powerStatus = ps5000aCurrentPowerSource(unit->handle); 
+
+		if (powerStatus == PICO_POWER_SUPPLY_NOT_CONNECTED)
+		{
+			numValidChannels = DUAL_SCOPE;
+		}
+	}
+
+	// See what ranges are available... 
+	printf("0 -> AC COUPLING\n");
+	printf("1 -> DC COUPLING\n");
+
+
+	do
+	{
+		count = 0;
+
+		do
+		{
+			// Ask the user to select a range
+			printf("Specify coupling (0 or 1)\n");
+			printf("99 - switches channel off\n");
+		
+			for (ch = 0; ch < numValidChannels; ch++) 
+			{
+				printf("\n");
+
+				do 
+				{
+					printf("Channel %c: ", 'A' + ch);
+					fflush(stdin);
+					scanf_s("%hd", &(unit->channelSettings[ch].DCcoupled));
+			
+				} while (unit->channelSettings[ch].DCcoupled != 0 && unit->channelSetting[ch].DCcoupled != 1 && unit->channelSettings[ch].DCcoupled != 99);
+
+				if (unit->channelSettings[ch].DCcoupled != 99) 
+				{
+					if(unit->channelSettings[ch].DCcoupled == 0) printf(" - AC COUPLED\n");
+					if(unit->channelSettings[ch].DCcoupled == 1) printf(" - DC COUPLED\n");
+					unit->channelSettings[ch].enabled = TRUE;
+					count++;
+				} 
+				else 
+				{
+					printf("Channel Switched off\n");
+					unit->channelSettings[ch].enabled = FALSE;
+					unit->channelSettings[ch].DCcoupled = 0;
+				}
+			}
+			printf(count == 0? "\n** At least 1 channel must be enabled **\n\n":"");
+		}
+		while (count == 0);	// must have at least one channel enabled
+
+		status = ps5000aGetDeviceResolution(unit->handle, &resolution);
+
+		// Verify that the number of enabled channels is valid for the resolution set.
+
+		switch (resolution)
+		{
+			case PS5000A_DR_15BIT:
+
+				if (count > 2)
+				{
+					printf("\nError: Only 2 channels may be enabled with 15-bit resolution set.\n");
+					printf("Please switch off %d channel(s).\n", numValidChannels - 2);
+					retry = TRUE;
+				}
+				else
+				{
+					retry = FALSE;
+				}
+				break;
+
+			case PS5000A_DR_16BIT:
+
+				if (count > 1)
+				{
+					printf("\nError: Only one channes may be enabled with 16-bit resolution set.\n");
+					printf("Please switch off %d channel(s).\n", numValidChannels - 1);
+					retry = TRUE;
+				}
+				else
+				{
+					retry = FALSE;
+				}
+				
+				break;
+
+			default:
+
+				retry = FALSE;
+				break;
+		}
+
+		printf("\n");
+	}
+	while (retry == TRUE);
+
+	setDefaults(unit);	// Put these changes into effect
 }
 
 /****************************************************************************
@@ -1979,10 +2094,12 @@ PICO_STATUS handleDevice(UNIT * unit)
 		if(unit->channelCount == QUAD_SCOPE && status == PICO_POWER_SUPPLY_NOT_CONNECTED && i >= DUAL_SCOPE)
 		{
 			unit->channelSettings[i].enabled = FALSE;
+			unit->channelSetting[4].enabled = TRUE;
 		}
 		else
 		{
 			unit->channelSettings[i].enabled = TRUE;
+			unit->channelSettings[4].enabled = TRUE;
 		}
 
 		unit->channelSettings[i].DCcoupled = FALSE;
@@ -2026,11 +2143,12 @@ void mainMenu(UNIT *unit)
 		printf("\n\n");
 		printf("Please select operation:\n\n");
 
+		printf("						C - Coupling AC/DC\n");
 		printf("W - Triggered streaming				V - Set voltages\n");
 		printf("R - Collect set of rapid captures		I - Set timebase\n");
 		printf("						A - ADC counts/mV\n");
-		
 		printf("						D - Set resolution\n");
+
 		printf("X - Exit\n");
 		printf("Operation:");
 
@@ -2065,6 +2183,10 @@ void mainMenu(UNIT *unit)
 				break;
 
 			case 'X':
+				break;
+
+			case 'C':
+				setCoupling(unit);
 				break;
 
 			default:
