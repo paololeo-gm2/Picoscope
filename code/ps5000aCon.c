@@ -897,16 +897,16 @@ void collectRapidBlock(UNIT * unit)
 		printf("ACTUAL OPTIONS FOR BLOCK DATA CAPTURE (TRIGGER OPTIONS)\n\n");
 		switch (init_trigger_channel)
 		{
-			case PS5000A_A:
+			case PS5000A_CHANNEL_A:
 				printf("Trigger Channel = A\n");
 				break;
-			case PS5000A_B:
+			case PS5000A_CHANNEL_B:
 				printf("Trigger Channel = B\n");
 				break;
-			case PS5000A_C:
+			case PS5000A_CHANNEL_C:
 				printf("Trigger Channel = C\n");
 				break;
-			case PS5000A_D:
+			case PS5000A_CHANNEL_D:
 				printf("Trigger Channel = D\n");
 				break;
 			case PS5000A_EXTERNAL:
@@ -924,14 +924,14 @@ void collectRapidBlock(UNIT * unit)
 		printf("W - Set Number of Waveforms		P - Set Number of Points per waveform\n");
 		printf("F - Set Number of Points pre-trigger	L - Set Number of points post-trigger\n");
 		printf("\n");
-		printf("C - Set Trigger channel 		V - Set Trigger Voltage\n")
+		printf("C - Set Trigger channel 		V - Set Trigger Voltage\n");
 		printf("\n");
 		printf("S - Continue\n");
 		printf("Operation:");
 
 		ch = toupper(_getch());
 
-		printf("\n\n")
+		printf("\n\n");
 
 		switch (ch)
 		{
@@ -1073,7 +1073,7 @@ void collectRapidBlock(UNIT * unit)
 	
 	if (triggerVoltage > voltageRange)
 	{
-		printf("Changing trigger voltage to half of the channel voltage range!\n")
+		printf("Changing trigger voltage to half of the channel voltage range!\n");
 		triggerVoltage = (voltageRange / 2);
 	}
 	
@@ -1512,7 +1512,7 @@ void setCoupling(UNIT * unit)
 					fflush(stdin);
 					scanf_s("%hd", &(unit->channelSettings[ch].DCcoupled));
 			
-				} while (unit->channelSettings[ch].DCcoupled != 0 && unit->channelSetting[ch].DCcoupled != 1 && unit->channelSettings[ch].DCcoupled != 99);
+				} while (unit->channelSettings[ch].DCcoupled != 0 && unit->channelSettings[ch].DCcoupled != 1 && unit->channelSettings[ch].DCcoupled != 99);
 
 				if (unit->channelSettings[ch].DCcoupled != 99) 
 				{
@@ -2154,7 +2154,7 @@ PICO_STATUS handleDevice(UNIT * unit)
 		if(unit->channelCount == QUAD_SCOPE && status == PICO_POWER_SUPPLY_NOT_CONNECTED && i >= DUAL_SCOPE)
 		{
 			unit->channelSettings[i].enabled = FALSE;
-			unit->channelSetting[4].enabled = TRUE;
+			unit->channelSettings[4].enabled = TRUE;
 		}
 		else
 		{
