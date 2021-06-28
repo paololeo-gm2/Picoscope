@@ -992,9 +992,9 @@ void collectRapidBlock(UNIT * unit)
 					scanf_s("%i", &init_trigger_channel);	
 					if(init_trigger_channel > 4 || init_trigger_channel < 0)
 					{
-						printf("Invalid value: Channel value out of range. Please set a valid value\n")
+						printf("Invalid value: Channel value out of range. Please set a valid value\n");
 					}
-				}while(init_trigger_channel > 4 || init_trigger_channel < 0)
+				}while(init_trigger_channel > 4 || init_trigger_channel < 0);
 				break;
 			case 'V':
 				do
@@ -1005,7 +1005,7 @@ void collectRapidBlock(UNIT * unit)
 					{
 						printf("Trigger Voltage out of range (over 5V). Please set a valid value\n");
 					}
-				}while(init_trigger_voltage < 5000 || init_trigger_voltage > 5000)
+				}while(init_trigger_voltage < 5000 || init_trigger_voltage > 5000);
 				break;
 			default:
 				printf("Invalid Operation\n");
