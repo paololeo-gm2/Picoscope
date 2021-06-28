@@ -371,7 +371,8 @@ void setDefaults(UNIT * unit)
 		}
 	}
 	
-	status = ps5000aSetChannel(unit->handle, PS5000A_EXTERNAL, 1, PS5000A_DC, PS5000A_5V, 0.0f);
+	status = ps5000aSetChannel(unit->handle, (PS5000A_CHANNEL)(PS5000A_CHANNEL_A + 4), TRUE, (PS5000A_COUPLING)FALSE, (PS5000A_RANGE)8, 0.0f);
+
 	printf(status?"SetDefaults:ps5000aSetChannel------ 0x%08lx \n":"", status);
 }
 
@@ -878,22 +879,53 @@ void collectRapidBlock(UNIT * unit)
 	int num_of_points_pre_trigger = 500;
 	int num_of_points_post_trigger = 1500;
 
+	int16_t init_trigger_voltage = 500;
+	PS5000A_CHANNEL init_trigger_channel = PS5000A_EXTERNAL;
+
 	int8_t ch = '.';
 	
 	while(ch != 'S')
 	{
 		printf("\n\n");
-		printf("ACTUAL OPTIONS FOR BLOCK DATA CAPTURE\n\n");
+		printf("ACTUAL OPTIONS FOR BLOCK DATA CAPTURE (DATA STRUCTURE)\n\n");
 		printf("Number of waveforms = %i\n", num_of_waveforms);
 		printf("Number of Points per waveform = %i\n", num_of_points);
 		printf("Number of Points pre-trigger = %i\n", num_of_points_pre_trigger);
 		printf("Number of Points post-trigger = %i\n", num_of_points_post_trigger);
+		printf("\n");
+
+		printf("ACTUAL OPTIONS FOR BLOCK DATA CAPTURE (TRIGGER OPTIONS)\n\n");
+		switch (init_trigger_channel)
+		{
+			case PS5000A_A:
+				printf("Trigger Channel = A\n");
+				break;
+			case PS5000A_B:
+				printf("Trigger Channel = B\n");
+				break;
+			case PS5000A_C:
+				printf("Trigger Channel = C\n");
+				break;
+			case PS5000A_D:
+				printf("Trigger Channel = D\n");
+				break;
+			case PS5000A_EXTERNAL:
+				printf("Trigger Channel = EXT\n");
+				break;
+			default:
+				printf("Trigger Channel not found\n");
+				break;
+		}
+		printf("Trigger Voltage = %i\n mV", init_trigger_voltage);
 
 		printf("\n");
 		printf("Please select operation:\n\n");
 
 		printf("W - Set Number of Waveforms		P - Set Number of Points per waveform\n");
 		printf("F - Set Number of Points pre-trigger	L - Set Number of points post-trigger\n");
+		printf("\n");
+		printf("C - Set Trigger channel 		V - Set Trigger Voltage\n")
+		printf("\n");
 		printf("S - Continue\n");
 		printf("Operation:");
 
@@ -941,11 +973,39 @@ void collectRapidBlock(UNIT * unit)
 					num_of_points_pre_trigger = num_of_points - num_of_points_post_trigger;
 					if(num_of_points_post_trigger > num_of_points || num_of_points_post_trigger < 0)
 					{
-						printf("Invalid value: Number of points pre-trigger is greater than Number of points. Please set a valid value\n");
+						printf("Invalid value: Number of points post-trigger is greater than Number of points. Please set a valid value\n");
 					}
 				}while (num_of_points_post_trigger > num_of_points || num_of_points_post_trigger < 0);
 				break;
 			case 'S':
+				break;
+			case 'C':
+				do
+				{
+					printf("0 -> A\n");
+					printf("1 -> B\n");
+					printf("2 -> C\n");
+					printf("3 -> D\n");
+					printf("4 -> EXT\n");
+					printf("\n");
+					printf("Trigger Channel:");
+					scanf_s("%i", &init_trigger_channel);	
+					if(init_trigger_channel > 4 || init_trigger_channel < 0)
+					{
+						printf("Invalid value: Channel value out of range. Please set a valid value\n")
+					}
+				}while(init_trigger_channel > 4 || init_trigger_channel < 0)
+				break;
+			case 'V':
+				do
+				{
+					printf("Trigger Voltage:");
+					scanf_s("%hi", &init_trigger_voltage);
+					if(init_trigger_voltage < 5000 || init_trigger_voltage > 5000) 
+					{
+						printf("Trigger Voltage out of range (over 5V). Please set a valid value\n");
+					}
+				}while(init_trigger_voltage < 5000 || init_trigger_voltage > 5000)
 				break;
 			default:
 				printf("Invalid Operation\n");
@@ -1013,6 +1073,7 @@ void collectRapidBlock(UNIT * unit)
 	
 	if (triggerVoltage > voltageRange)
 	{
+		printf("Changing trigger voltage to half of the channel voltage range!\n")
 		triggerVoltage = (voltageRange / 2);
 	}
 	
@@ -1037,7 +1098,7 @@ void collectRapidBlock(UNIT * unit)
 
 	printf("Collect rapid block triggered...\n");
 	printf("Collects when value rises past %d ", scaleVoltages ?
-		adc_to_mv(triggerProperties.thresholdUpper, unit->channelSettings[PS5000A_CHANNEL_A].range, unit)	// If scaleVoltages, print mV value
+		adc_to_mv(triggerProperties.thresholdUpper, unit->channelSettings[PS5000A_EXTERNAL].range, unit)	// If scaleVoltages, print mV value
 		: triggerProperties.thresholdUpper);																// else print ADC Count
 
 	printf(scaleVoltages ? "mV\n" : "ADC Counts\n");
@@ -1053,7 +1114,6 @@ void collectRapidBlock(UNIT * unit)
 
 	// Set the number of segments - this can be more than the number of waveforms to collect
 	nSegments = num_of_waveforms;
-	printf("GUARDAMIIIIII : %i\n", maxSegments);
 
 	if (nSegments > maxSegments)
 	{
