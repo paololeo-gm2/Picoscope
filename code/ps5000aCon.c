@@ -2143,7 +2143,7 @@ void mainMenu(UNIT *unit)
 		printf("\n\n");
 		printf("Please select operation:\n\n");
 
-		printf("						C - Coupling AC/DC\n");
+		printf("						C - Coupling AC/DC (Default = AC)\n");
 		printf("W - Triggered streaming				V - Set voltages\n");
 		printf("R - Collect set of rapid captures		I - Set timebase\n");
 		printf("						A - ADC counts/mV\n");
