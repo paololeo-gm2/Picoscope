@@ -1001,11 +1001,11 @@ void collectRapidBlock(UNIT * unit)
 				{
 					printf("Trigger Voltage:");
 					scanf_s("%hi", &init_trigger_voltage);
-					if(init_trigger_voltage < 5000 || init_trigger_voltage > 5000) 
+					if(init_trigger_voltage < -5000 || init_trigger_voltage > 5000) 
 					{
 						printf("Trigger Voltage out of range (over 5V). Please set a valid value\n");
 					}
-				}while(init_trigger_voltage < 5000 || init_trigger_voltage > 5000);
+				}while(init_trigger_voltage < -5000 || init_trigger_voltage > 5000);
 				break;
 			default:
 				printf("Invalid Operation\n");
@@ -1031,9 +1031,9 @@ void collectRapidBlock(UNIT * unit)
 	int16_t		retry;
 	int32_t timeInterval;
 
-	int16_t		triggerVoltage = 500; // mV
+	int16_t		triggerVoltage = init_trigger_voltage; // mV
 	//PS5000A_CHANNEL triggerChannel = PS5000A_CHANNEL_A;
-	PS5000A_CHANNEL triggerChannel = PS5000A_EXTERNAL;
+	PS5000A_CHANNEL triggerChannel = (PS5000A_CHANNEL) init_trigger_channel;
 	int16_t		voltageRange = inputRanges[unit->channelSettings[triggerChannel].range];
 	int16_t		triggerThreshold = 0;
 
