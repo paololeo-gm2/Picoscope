@@ -1774,7 +1774,23 @@ void setTimebase(UNIT * unit)
 	}
 	while (status != PICO_OK);
 
-	printf("Timebase used %lu = %ld ns sample interval\n", timebase, timeInterval);
+	if (timeInterval < 1000)
+	{
+		printf("Timebase used %lu = %ld ns sample interval\n", timebase, timeInterval);
+	}
+	else if (timeInterval >= 1000 && timeInterval < 1000000)
+	{
+		printf("Timebase used %lu = %ld us sample interval\n", timebase, timeInterval/1000);
+	}
+	else if (timeInterval >=1000000 && timeInterval < 1000000000)
+	{
+		printf("Timebase used %lu = %ld ms sampleInterval\n", timebase, timeInterval/1000000);
+	}
+	else
+	{
+		printf("Timebase used too much high for sampling rate\n");
+	}
+	
 }
 
 /****************************************************************************
